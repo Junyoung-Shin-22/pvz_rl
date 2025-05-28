@@ -1,28 +1,28 @@
-from agents import evaluate
-import gym
-from itertools import count
+import os
 import numpy as np
-import json
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.autograd import Variable
-import torch.optim as optim
-from pvz import config
-import matplotlib.pyplot as plt
 
+import tqdm
+import datetime
 
-def train(env, agent, n_iter=100000, n_record=500, n_save=1000):
+def timestamp():
+    return datetime.datetime.now().strftime('%y%m%d_%H%M%S')
+
+def train(env, agent, n_iter=100000, n_record=1000, n_save=1000):
+    ts = timestamp()
+    checkpoint_path = f'checkpoints/{ts}/'
+    
+    os.makedirs(os.path.join(checkpoint_path, 'policy'))
+    os.makedirs(os.path.join(checkpoint_path, 'value'))
+
     sum_score = 0
-    sum_iter = 0
-    score_plt = []
-    iter_plt = []
-    eval_score_plt = []
-    eval_iter_plt = []
-    save = False
-    best_score = None
+    best_score = 0
 
-    for episode_idx in range(n_iter):
+    sum_iter = 0
+    score_list = []
+    iter_list = []
+
+    pbar = tqdm.trange(0, n_iter, desc='mean_score: N/A')
+    for episode_idx in pbar:
 
         # play episodes
         summary = env.play(agent)
@@ -34,33 +34,28 @@ def train(env, agent, n_iter=100000, n_record=500, n_save=1000):
         # Update agent
         agent.update(summary["observations"],summary["actions"],summary["rewards"])
 
-        if (episode_idx%n_record == n_record-1):
-            if save:
-                if sum_score >= best_score:
-                    agent.save(nn_name1, nn_name2)
-                    best_score = sum_score
-            print("---Episode {}, mean score {}".format(episode_idx,sum_score/n_record))
-            print("---n_iter {}".format(sum_iter/n_record))
-            score_plt.append(sum_score/n_record)
-            iter_plt.append(sum_iter/n_record)
+        if ((episode_idx + 1) % n_record == 0):
+            if sum_score >= best_score:
+                agent.save(f'{checkpoint_path}/policy/{episode_idx}.pt',
+                           f'{checkpoint_path}/value/{episode_idx}.pt')
+                best_score = sum_score
+
+            pbar.set_description(f'mean_score: {sum_score/n_record}')
+
+            score_list.append(sum_score/n_record)
+            iter_list.append(sum_iter/n_record)
             sum_iter = 0
             sum_score = 0
-            # input()
-        if not save:
-            if (episode_idx%n_save == n_save-1):
-                s = input("Save? (y/n): ")
-                if (s=='y'):
-                    save = True
-                    best_score = 0
-                    nn_name1 = input("Save name for policy net: ")
-                    nn_name2 = input("Save name for value net: ")
 
-    plt.figure(200)
-    plt.plot(range(n_record, n_iter+1, n_record), score_plt)
-    plt.show()
-    plt.figure(300)
-    plt.plot(range(n_record, n_iter+1, n_record), iter_plt)
-    plt.show()
+    score_arr, iter_arr = map(np.array, [score_list, iter_list])
+    np.savez(f'{checkpoint_path}/train.npz', score=score_list, iter=iter_list)
+
+    # plt.figure(200)
+    # plt.plot(range(n_record, n_iter+1, n_record), score_plt)
+    # plt.show()
+    # plt.figure(300)
+    # plt.plot(range(n_record, n_iter+1, n_record), iter_plt)
+    # plt.show()
 
 
 # Import your agent
