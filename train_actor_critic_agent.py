@@ -47,7 +47,6 @@ def train(env, agent, n_iter=100000, n_record=1000, n_save=1000):
             sum_iter = 0
             sum_score = 0
 
-    score_arr, iter_arr = map(np.array, [score_list, iter_list])
     np.savez(f'{checkpoint_path}/train.npz', score=score_list, iter=iter_list)
 
     # plt.figure(200)
