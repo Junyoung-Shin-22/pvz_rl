@@ -7,7 +7,7 @@ import datetime
 def timestamp():
     return datetime.datetime.now().strftime('%y%m%d_%H%M%S')
 
-def train(env, agent, n_iter=100000, n_record=1000, n_save=1000):
+def train(env, agent, n_iter=100000, n_record=1000):
     ts = timestamp()
     checkpoint_path = f'checkpoints/{ts}/'
     
