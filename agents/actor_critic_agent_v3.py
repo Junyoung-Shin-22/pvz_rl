@@ -26,14 +26,12 @@ class SJYPolicynetAC3(nn.Module):
     def __init__(self, input_size, output_size):
         super(SJYPolicynetAC3, self).__init__()
         self.net = nn.Sequential(
-            [
-                nn.Linear(input_size, 64),
-                nn.LeakyReLU(),
-                nn.Linear(64, 128),
-                nn.LeakyReLU(),
-                nn.Linear(128, output_size),
-                nn.Softmax(dim=-1),
-            ]
+            nn.Linear(input_size, 64),
+            nn.LeakyReLU(),
+            nn.Linear(64, 128),
+            nn.LeakyReLU(),
+            nn.Linear(128, output_size),
+            nn.Softmax(dim=-1),
         )
 
     def forward(self, x):
@@ -53,15 +51,13 @@ class ValuenetAC3(nn.Module):
 # input_size = 55, output_size = 1 (obviously), for this case
 class SJYValuenetAC3(nn.Module):
     def __init__(self, input_size):
-        super(SJYPolicynetAC3, self).__init__()
+        super(SJYValuenetAC3, self).__init__()
         self.net = nn.Sequential(
-            [
-                nn.Linear(input_size, 64),
-                nn.LeakyReLU(),
-                nn.Linear(64, 16),
-                nn.LeakyReLU(),
-                nn.Linear(16, 1),
-            ]
+            nn.Linear(input_size, 64),
+            nn.LeakyReLU(),
+            nn.Linear(64, 16),
+            nn.LeakyReLU(),
+            nn.Linear(16, 1),
         )
 
     def forward(self, x):
@@ -70,75 +66,74 @@ class SJYValuenetAC3(nn.Module):
 class ACAgent3():
     def __init__(self, input_size, possible_actions, device='cuda'):
         self.possible_actions = possible_actions
-        
         output_size = len(possible_actions)
+
+        self.device = torch.device(device)
         # self.policy_net = PolicynetAC3(input_size, output_size=len(possible_actions))
         # self.value_net = ValuenetAC3(input_size, output_size=len(possible_actions))
-        self.policy_net = SJYPolicynetAC3(input_size, output_size)
-        self.value_net = SJYValuenetAC3(input_size)
+        self.policy_net = SJYPolicynetAC3(input_size, output_size).to(self.device)
+        self.value_net = SJYValuenetAC3(input_size).to(self.device)
 
         self.optimizer_p = optim.Adam(self.policy_net.parameters(), lr=1e-4)
         self.optimizer_v = optim.Adam(self.value_net.parameters(), lr=1e-4)
         self.saved_actions = []
 
-        self.device = torch.device('cuda')
-
     def decide_action(self, state):
-        state = torch.from_numpy(state).float()
+        state = torch.from_numpy(state).to(dtype=torch.float, device=self.device)
         probs = self.policy_net(state)
-        state_value = self.valuenet(state)
+        value = self.value_net(state)
+        
         # Create a categorical distribution over the list of probabilities of actions
-        m = Categorical(probs)
         # Sample an action using the distribution
+        m = Categorical(probs)
         action = m.sample()
-        # Save to action buffer
-        self.saved_actions.append((m.log_prob(action), state_value))
-        # Return the action to take
-        return action.item()
+        
+        self.saved_actions.append((m.log_prob(action), value)) # Save to action buffer
+        return action.item() # Return the action to take
 
-    def discount_rewards(self,r,gamma):
+    def discount_rewards(self, r, gamma):
         discounted_r = np.zeros_like(r)
-        running_add = 0
-        for t in reversed(range(0, r.shape[0])):
-            running_add = running_add * gamma + r[t][0]
-            discounted_r[t][0] = running_add
+        discounted_r[-1] = r[-1]
+
+        for t in range(r.shape[0]-2, -1, -1):
+            discounted_r[t] = gamma * discounted_r[t+1] + r[t]
         return discounted_r
 
-
-    def update(self,observation, actions, rewards):
+    def update(self, observation, actions, rewards):
         # Discount rewards through the whole episode
-        rewards = (torch.tensor(self.discount_rewards(rewards, gamma = 0.99))).float()
+        discounted_rewards = self.discount_rewards(rewards, gamma = 0.99)
+        discounted_rewards = torch.from_numpy(discounted_rewards).to(dtype=torch.float, device=self.device)
+
         saved_actions = self.saved_actions
         policy_losses = [] # List to save actor (policy) loss
         value_losses = [] # List to save critic (value) loss
-        self.optimizer1.zero_grad()
-        self.optimizer2.zero_grad()
+        self.optimizer_p.zero_grad()
+        self.optimizer_v.zero_grad()
 
         # Store the losses
-        for  (log_prob, value), R in zip(saved_actions, rewards):
+        for (log_prob, value), R in zip(saved_actions, discounted_rewards):
             advantage = R - value.item()
             policy_losses.append(-log_prob * advantage)
-            value_losses.append(F.smooth_l1_loss(value, torch.tensor([R])))
+            value_losses.append(F.smooth_l1_loss(value, R))
 
         # Compute both losses and backpropagate
-        loss = torch.stack(policy_losses).sum()
-        loss.backward(loss)
-        self.optimizer1.step()
-        loss = torch.stack(value_losses).sum()
-        loss.backward(loss)
-        self.optimizer2.step()
+        loss_p = torch.stack(policy_losses).sum()
+        loss_p.backward(loss_p)
+        self.optimizer_p.step()
+        
+        loss_v = torch.stack(value_losses).sum()
+        loss_v.backward(loss_v)
+        self.optimizer_v.step()
+        
         self.saved_actions = []
 
     def save(self, nn_name_1, nn_name_2):
-        torch.save(self.policy, nn_name_1)
-        torch.save(self.valuenet, nn_name_2)
-
+        torch.save(self.policy_net, nn_name_1)
+        torch.save(self.value_net, nn_name_2)
 
     def load(self, nn_name_1, nn_name_2):
-        self.policy = torch.load(nn_name_1)
+        self.policy_net = torch.load(nn_name_1)
         self.valuenet = torch.load(nn_name_2)
-
-
 
 
 class TrainerAC3():
@@ -147,7 +142,6 @@ class TrainerAC3():
         self.max_frames = max_frames
         self.render = render
         self._grid_size = config.N_LANES * config.LANE_LENGTH
-
 
     def get_actions(self):
         return list(range(self.env.action_space.n))
