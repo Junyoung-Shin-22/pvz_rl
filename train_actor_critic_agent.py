@@ -7,7 +7,7 @@ import datetime
 def timestamp():
     return datetime.datetime.now().strftime('%y%m%d_%H%M%S')
 
-def train(env, agent, n_iter=100000, n_record=1000):
+def train(env, agent, n_iter=100000, n_record=10000):
     ts = timestamp()
     checkpoint_path = f'checkpoints/{ts}/'
     
@@ -22,22 +22,22 @@ def train(env, agent, n_iter=100000, n_record=1000):
     iter_list = []
 
     pbar = tqdm.trange(0, n_iter, desc='mean_score: N/A')
-    for episode_idx in pbar:
-
+    for i in pbar:
         # play episodes
         summary = env.play(agent)
-        summary['score'] = np.sum(summary["rewards"])
+        rewards = summary["rewards"]
+        score = np.sum(rewards)
 
-        sum_score += summary['score']
+        sum_score += score
         sum_iter += min(env.env._scene._chrono, env.max_frames)
 
         # Update agent
-        agent.update(summary["observations"],summary["actions"],summary["rewards"])
+        agent.update(rewards)
 
-        if ((episode_idx + 1) % n_record == 0):
+        if ((i + 1) % n_record == 0):
             if sum_score >= best_score:
-                agent.save(f'{checkpoint_path}/policy/{episode_idx}.pt',
-                           f'{checkpoint_path}/value/{episode_idx}.pt')
+                agent.save(f'{checkpoint_path}/policy/{i}.pt',
+                           f'{checkpoint_path}/value/{i}.pt')
                 best_score = sum_score
 
             pbar.set_description(f'mean_score: {sum_score/n_record}')
@@ -49,23 +49,16 @@ def train(env, agent, n_iter=100000, n_record=1000):
 
     np.savez(f'{checkpoint_path}/train.npz', score=score_list, iter=iter_list)
 
-    # plt.figure(200)
-    # plt.plot(range(n_record, n_iter+1, n_record), score_plt)
-    # plt.show()
-    # plt.figure(300)
-    # plt.plot(range(n_record, n_iter+1, n_record), iter_plt)
-    # plt.show()
 
-
-# Import your agent
 from agents import ACAgent3, TrainerAC3
 
 if __name__ == "__main__":
 
-    env = TrainerAC3(render=False,max_frames = 400)
+    env = TrainerAC3(max_frames = 1000)
     agent = ACAgent3(
         input_size = env.num_observations(),
-        possible_actions=env.get_actions()
+        possible_actions=env.get_actions(),
+        device='cuda'
     )
     train(env, agent)
 

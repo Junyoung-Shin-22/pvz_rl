@@ -99,7 +99,7 @@ class ACAgent3():
             discounted_r[t] = gamma * discounted_r[t+1] + r[t]
         return discounted_r
 
-    def update(self, observation, actions, rewards):
+    def update(self, rewards):
         # Discount rewards through the whole episode
         discounted_rewards = self.discount_rewards(rewards, gamma = 0.99)
         discounted_rewards = torch.from_numpy(discounted_rewards).to(dtype=torch.float, device=self.device)
@@ -137,10 +137,9 @@ class ACAgent3():
 
 
 class TrainerAC3():
-    def __init__(self,render=True, max_frames = 1000, n_iter = 100000):
+    def __init__(self, max_frames = 1000):
         self.env = gym.make('gym_pvz:pvz-env-v2')
         self.max_frames = max_frames
-        self.render = render
         self._grid_size = config.N_LANES * config.LANE_LENGTH
 
     def get_actions(self):
@@ -157,8 +156,7 @@ class TrainerAC3():
         observation = np.concatenate([observation[:self._grid_size], observation_zombie,
         [observation[2 * self._grid_size]/SUN_NORM],
         observation[2 * self._grid_size+1:]])
-        if self.render:
-            print(observation)
+
         return observation
 
     def _grid_to_lane(self, grid):
@@ -168,33 +166,25 @@ class TrainerAC3():
     def play(self,agent):
         """ Play one episode and collect observations and rewards """
 
-        summary = dict()
-        summary['rewards'] = list()
-        summary['observations'] = list()
-        summary['actions'] = list()
-        observation = self._transform_observation(self.env.reset())
-
-        t = 0
-
-        while(self.env._scene._chrono<self.max_frames):
-            if(self.render):
-                self.env.render()
+        observations, actions, rewards = [], [], []
+        
+        observation = self.env.reset()
+        while(self.env._scene._chrono < self.max_frames):
+            observation = self._transform_observation(observation)
+            observations.append(observation)
 
             action = agent.decide_action(observation)
+            actions.append(action)
 
-            summary['observations'].append(observation)
-            summary['actions'].append(action)
             observation, reward, done, info = self.env.step(action)
-            observation = self._transform_observation(observation)
-            summary['rewards'].append(reward)
+            rewards.append(reward)
 
-            if done:
-                break
+            if done: break
 
-        summary['observations'] = np.vstack(summary['observations'])
-        summary['actions'] = np.vstack(summary['actions'])
-        summary['rewards'] = np.vstack(summary['rewards'])
-        return summary
+        observations = np.vstack(observations)
+        actions = np.vstack(actions)
+        rewards = np.vstack(rewards)
+        return dict(observations=observations, actions=actions, rewards=rewards)
 
     def get_render_info(self):
         return self.env._scene._render_info
