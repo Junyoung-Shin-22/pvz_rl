@@ -58,6 +58,7 @@ if __name__ == "__main__":
     agent = ACAgent3(
         input_size = env.num_observations(),
         possible_actions=env.get_actions(),
+        gamma = 0.85,
         device='cuda'
     )
     train(env, agent)

@@ -64,9 +64,10 @@ class SJYValuenetAC3(nn.Module):
         return self.net(x)
 
 class ACAgent3():
-    def __init__(self, input_size, possible_actions, device='cuda'):
+    def __init__(self, input_size, possible_actions, gamma=0.99, device='cuda'):
         self.possible_actions = possible_actions
         output_size = len(possible_actions)
+        self.gamma = gamma
 
         self.device = torch.device(device)
         # self.policy_net = PolicynetAC3(input_size, output_size=len(possible_actions))
@@ -91,17 +92,17 @@ class ACAgent3():
         self.saved_actions.append((m.log_prob(action), value)) # Save to action buffer
         return action.item() # Return the action to take
 
-    def discount_rewards(self, r, gamma):
+    def discount_rewards(self, r):
         discounted_r = np.zeros_like(r)
         discounted_r[-1] = r[-1]
 
         for t in range(r.shape[0]-2, -1, -1):
-            discounted_r[t] = gamma * discounted_r[t+1] + r[t]
+            discounted_r[t] = self.gamma * discounted_r[t+1] + r[t]
         return discounted_r
 
     def update(self, rewards):
         # Discount rewards through the whole episode
-        discounted_rewards = self.discount_rewards(rewards, gamma = 0.99)
+        discounted_rewards = self.discount_rewards(rewards)
         discounted_rewards = torch.from_numpy(discounted_rewards).to(dtype=torch.float, device=self.device)
 
         saved_actions = self.saved_actions
