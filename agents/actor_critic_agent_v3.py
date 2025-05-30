@@ -1,14 +1,10 @@
 import gym
-from itertools import count
 import numpy as np
-import json
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
 import torch.optim as optim
 from pvz import config
-import matplotlib.pyplot as plt
 from torch.distributions import Categorical
 
 HP_NORM = 100
@@ -25,6 +21,24 @@ class PolicynetAC3(nn.Module):
         action_prob = F.softmax(self.action_head(x), dim=-1)
         return action_prob
 
+# input_size = 55, output_size = 181, for this case
+class SJYPolicynetAC3(nn.Module):
+    def __init__(self, input_size, output_size):
+        super(SJYPolicynetAC3, self).__init__()
+        self.net = nn.Sequential(
+            [
+                nn.Linear(input_size, 64),
+                nn.LeakyReLU(),
+                nn.Linear(64, 128),
+                nn.LeakyReLU(),
+                nn.Linear(128, output_size),
+                nn.Softmax(dim=-1),
+            ]
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
 class ValuenetAC3(nn.Module):
     def __init__(self, input_size, output_size, hidden_size=80):
         super(ValuenetAC3, self).__init__()
@@ -36,19 +50,42 @@ class ValuenetAC3(nn.Module):
         state_value = self.value_head(x)
         return state_value
 
+# input_size = 55, output_size = 1 (obviously), for this case
+class SJYValuenetAC3(nn.Module):
+    def __init__(self, input_size):
+        super(SJYPolicynetAC3, self).__init__()
+        self.net = nn.Sequential(
+            [
+                nn.Linear(input_size, 64),
+                nn.LeakyReLU(),
+                nn.Linear(64, 16),
+                nn.LeakyReLU(),
+                nn.Linear(16, 1),
+            ]
+        )
+
+    def forward(self, x):
+        return self.net(x)
 
 class ACAgent3():
-    def __init__(self,input_size, possible_actions):
+    def __init__(self, input_size, possible_actions, device='cuda'):
         self.possible_actions = possible_actions
-        self.policy = PolicynetAC3(input_size, output_size=len(possible_actions))
-        self.valuenet = ValuenetAC3(input_size, output_size=len(possible_actions))
-        self.optimizer1 = optim.Adam(self.policy.parameters(), lr=1e-4)
-        self.optimizer2 = optim.Adam(self.valuenet.parameters(), lr=1e-4)
+        
+        output_size = len(possible_actions)
+        # self.policy_net = PolicynetAC3(input_size, output_size=len(possible_actions))
+        # self.value_net = ValuenetAC3(input_size, output_size=len(possible_actions))
+        self.policy_net = SJYPolicynetAC3(input_size, output_size)
+        self.value_net = SJYValuenetAC3(input_size)
+
+        self.optimizer_p = optim.Adam(self.policy_net.parameters(), lr=1e-4)
+        self.optimizer_v = optim.Adam(self.value_net.parameters(), lr=1e-4)
         self.saved_actions = []
+
+        self.device = torch.device('cuda')
 
     def decide_action(self, state):
         state = torch.from_numpy(state).float()
-        probs = self.policy(state)
+        probs = self.policy_net(state)
         state_value = self.valuenet(state)
         # Create a categorical distribution over the list of probabilities of actions
         m = Categorical(probs)
