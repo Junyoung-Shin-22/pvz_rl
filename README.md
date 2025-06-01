@@ -7,11 +7,27 @@ The following python libraries are required: pytorch, gym, pygame (and shap to e
 
 ## Installation/Setup
 
-The game engine we developed and the Open AI gym environment are both encapsulated in python libraries.
-The easiest way to run our code is to use the command prompt (at least in windows or linux).
+> Environment used by 신준영
 
-```
+| Hardware/Software | Version |
+|-|-|
+|GPU| 1xRTX4090|
+|OS|Ubuntu 24.04 LTS|
+|Environment Manager|conda 25.5.1|
+|Python|3.9.21|
+|pytorch|1.13.1 (cuda 11.7)|
+|gym|(openai gym) 0.19.0|
+|pygame|2.6.1|
+
+I also include "environment.yaml" for conda environment setup.
+
+
+Also, run commands below:
+```sh
+# if you did not clone it already
 git clone https://github.com/inf581-pvz-anonymous/pvz_rl.git
+
+# and install both "pvz" and "gym-pvz" directory using pip
 cd pvz_rl
 cd pvz
 pip install -e .
