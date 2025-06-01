@@ -134,7 +134,7 @@ class ACAgent3():
 
     def load(self, nn_name_1, nn_name_2):
         self.policy_net = torch.load(nn_name_1)
-        self.valuenet = torch.load(nn_name_2)
+        self.value_net = torch.load(nn_name_2)
 
 
 class TrainerAC3():
