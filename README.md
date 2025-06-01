@@ -4,6 +4,7 @@ Plants vs. Zombies remake and RL agents
 ## Requirements
 
 Python Version: 3.8.10    
+
 Key Python Libraries: 
 - torch==1.13.1,
 - gym==0.19.0,
