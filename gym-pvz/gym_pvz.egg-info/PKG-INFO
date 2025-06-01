@@ -1,0 +1,6 @@
+Metadata-Version: 2.4
+Name: gym_pvz
+Version: 0.0.1
+Requires-Dist: gym
+Requires-Dist: pvz
+Dynamic: requires-dist
