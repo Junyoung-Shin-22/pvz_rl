@@ -1,6 +1,10 @@
-Metadata-Version: 2.4
-Name: gym_pvz
+Metadata-Version: 1.0
+Name: gym-pvz
 Version: 0.0.1
-Requires-Dist: gym
-Requires-Dist: pvz
-Dynamic: requires-dist
+Summary: UNKNOWN
+Home-page: UNKNOWN
+Author: UNKNOWN
+Author-email: UNKNOWN
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
