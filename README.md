@@ -3,7 +3,11 @@ Plants vs. Zombies remake and RL agents
 
 ## Requirements
 
-The following python libraries are required: pytorch, gym, pygame (and shap to evaluate feature importance if wanted).
+Python Version: 3.8.10
+Key Python Libraries: 
+- torch==1.13.1,
+- gym==0.19.0,
+- pygame==2.6.1.
 
 ## Installation/Setup
 
@@ -32,7 +36,15 @@ python game_render.py
 
 Here we will guide you to train an agent from scratch. However, since the training can be fairly long depending on your machine (more than 30 minutes if the agent performs well), you can skip the training section (you then do not have to modify any of the code which will then use a pretrained agent from our agent zoo).
 
-### Train an agent
+### REINFORCE
+
+To train and evaluate a REINFORCE agent
+
+```
+python train_reinforce_agent.py
+```
+
+### Actor-Critic, DDQN
 
 To train a DDQN agent
 
@@ -40,7 +52,6 @@ To train a DDQN agent
 python train_ddqn_agent.py
 ```
 
-To train other agents, use the dedicated train scripts. You will be asked to save the agent under a certain name/path we will refer as NAME in the following commands.
 Once the agent is trained, for DDQN agent, you can plot the learning curves with
 
 ```
@@ -48,7 +59,6 @@ python plot_training_ddqn.py NAME
 ```
 In red is the performances of the agent evaluated by removing the epislon-greedy policy used for training and using a greedy policy instead (i.e. epsilon=0).
 
-### Evaluate the agent
 To evaluate your newly trained agent, you'll have to modify the script_evaluate.py file in the following way. Change the agent_type variable in accordance to the trained agent (e.g "DDQN") and then replace the loaded path by the chosen "NAME" in the corresponding if clause in the main function.
 
 ```
@@ -56,8 +66,6 @@ python script_evaluate.py
 ```
 1000 plays will be run with your agent and you will then see in order: histogram distribution of the score, histogram distribution of the survived frames, histogram distribution of the actions used, histogram distribution of the plant used.
 
-
-### Visualize a play
 With the following, you can visualize a game of an agent.
 ```
 python game_render.py
