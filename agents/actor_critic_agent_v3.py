@@ -133,8 +133,8 @@ class ACAgent3():
         torch.save(self.value_net, nn_name_2)
 
     def load(self, nn_name_1, nn_name_2):
-        self.policy_net = torch.load(nn_name_1)
-        self.value_net = torch.load(nn_name_2)
+        self.policy_net = torch.load(nn_name_1).to(self.device)
+        self.value_net = torch.load(nn_name_2).to(self.device)
 
 
 class TrainerAC3():

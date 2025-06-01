@@ -11,6 +11,7 @@ from pvz import config
 import matplotlib.pyplot as plt
 # from game_render import render
 
+from tqdm import trange
 
 def evaluate(env, agent, n_iter=1000, verbose = True):
     sum_score = 0
@@ -20,7 +21,7 @@ def evaluate(env, agent, n_iter=1000, verbose = True):
     n_iter = n_iter
     actions = []
 
-    for episode_idx in range(n_iter):
+    for episode_idx in trange(n_iter):
         if verbose:
             print("\r{}/{}".format(episode_idx, n_iter), end="")
         
