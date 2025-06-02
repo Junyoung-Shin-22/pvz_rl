@@ -1,10 +1,12 @@
 from pvz import config
-from agents import evaluate
+from agents.evaluate_agent import evaluate_simple
 from agents import ACAgent3, TrainerAC3
 
 import os
 import os.path as osp
 import glob
+
+import numpy as np
 
 _key = lambda x: int(osp.splitext(osp.basename(x))[0])
 checkpoints_path = './checkpoints'
@@ -26,8 +28,9 @@ if __name__ == "__main__":
         )
         agent.load(policy_net_path, value_net_path)
         
-        avg_score, avg_iter = evaluate(env, agent, verbose=False)
+        scores, frames = evaluate_simple(env, agent, 1000)
         
+        np.savez(osp.join(checkpoints_path, checkpoint, 'eval.npz'), scores=scores, frames=frames)
         with open(osp.join(checkpoints_path, checkpoint, 'eval.txt'), 'wt') as f:
-            f.write(f"Mean score {avg_score}\n")
-            f.write(f"Mean frames {avg_iter}")
+            f.write(f"score mean: {scores.mean()}, max: {scores.max()}\n")
+            f.write(f"frame mean: {frames.mean()}, max: {frames.max()}")

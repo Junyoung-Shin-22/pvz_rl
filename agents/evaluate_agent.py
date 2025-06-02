@@ -13,6 +13,22 @@ import matplotlib.pyplot as plt
 
 from tqdm import trange
 
+def evaluate_simple(env, agent, n_iter=1000):
+    pass
+
+    scores = np.zeros(n_iter, dtype=np.float32)
+    frames = np.zeros(n_iter, dtype=np.float32)
+
+    for i in trange(n_iter):
+        summary = env.play(agent)
+        summary['score'] = np.sum(summary["rewards"])
+
+        scores[i] = summary['score']
+        frames[i] = min(env.env._scene._chrono, config.MAX_FRAMES)
+    
+    return scores, frames
+        
+
 def evaluate(env, agent, n_iter=1000, verbose = True):
     sum_score = 0
     sum_iter = 0
