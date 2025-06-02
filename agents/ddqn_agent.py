@@ -13,7 +13,7 @@ HP_NORM = 1
 SUN_NORM = 200
 
 class QNetwork(nn.Module):
-    def __init__(self, env, epsilon=0.05, learning_rate = 1e-3, device='cpu', use_zombienet=True, use_gridnet=True):
+    def __init__(self, env, epsilon=0.05, learning_rate = 2e-3, device='cpu', use_zombienet=True, use_gridnet=True):
         super(QNetwork, self).__init__()
         self.device = device
         self.n_inputs = config.N_LANES * config.LANE_LENGTH + config.N_LANES + len(env.plant_deck) + 1
@@ -168,7 +168,7 @@ class DDQNAgent:
     #     self.pre_buffer = []
         
     # Implement DQN training algorithm
-    def train(self, gamma=0.99, max_episodes=100000,
+    def train(self, gamma=0.95, max_episodes=100000,
               network_update_frequency=32,
               network_sync_frequency=2000,
               evaluate_frequency=500,
