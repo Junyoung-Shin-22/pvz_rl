@@ -46,7 +46,7 @@ By default, this will show the behavior of the DDQN agent. You can modify agent_
 
 To visualize a game with higher FPS (more fluid motions), change the FPS variable in pvz/pvz/config.py. This may have a slight impact on the behavior of some agents.
 
-###Evaluation of the Agent
+### Evaluation of the Agent
 Due to compatibility issues between the computer and the game, we were unable to connect the evaluation code to the actual Plants vs. Zombies game, and therefore could not verify the agent's performance in the live environment.
 Instead, we analyzed the training process by observing the loss, reward, and frame count every 1,000 episodes out of a total of 50,000 episodes. Based on these values and the overall trends in the graphs, we focused on evaluating the learning speed and stability in relation to changes in the Q-function and parameters.
 
