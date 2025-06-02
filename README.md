@@ -4,6 +4,10 @@ Plants vs. Zombies remake and RL agents
 ## Requirements
 
 The following python libraries are required: pytorch, gym, pygame (and shap to evaluate feature importance if wanted).
+To install all required dependencies at once, you can use the provided requirements.txt file:
+pip install -r requirements.txt
+This will ensure that all necessary packages are installed with the appropriate versions.
+
 
 ## Installation/Setup
 
